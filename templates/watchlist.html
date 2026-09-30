@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}My Watchlist – CineBase{% endblock %}
+{% block content %}
+<div class="container hero">
+  <p class="muted">Personal watchlist</p>
+  <h1>My Watchlist</h1>
+</div>
+
+{{ watchlist_json|json_script:"watchlist-data" }}
+<div class="container panel"
+     x-data="watchlistPage(JSON.parse($el.previousElementSibling.textContent))"
+     @watchlist-updated.window="$nextTick(() => {})">
+
+  <div class="toolbar">
+    <button class="btn" :class="{active:status==='all'}" @click="status='all'">All <span x-text="items.length"></span></button>
+    <button class="btn" :class="{active:status==='want'}" @click="status='want'">Want to Watch <span x-text="items.filter(i=>i.status==='want').length"></span></button>
+    <button class="btn" :class="{active:status==='watched'}" @click="status='watched'">Watched <span x-text="items.filter(i=>i.status==='watched').length"></span></button>
+
+    <select x-model="sortBy" class="btn" aria-label="Sort watchlist">
+      <option value="title">Sort: Title</option>
+      <option value="year">Sort: Year</option>
+      <option value="rating">Sort: Rating</option>
+    </select>
+  </div>
+
+  <div class="bulk-toolbar" x-show="selected.length" x-cloak x-transition>
+    <strong x-text="`${selected.length} selected`"></strong>
+    <span x-text="`${totalRuntime} minutes combined runtime`"></span>
+    <button class="btn" @click="selected=[]">Clear selection</button>
+  </div>
+
+  <div class="toolbar">
+    <label><input type="checkbox" @change="toggleAll()" :checked="selected.length === filteredItems.length && filteredItems.length > 0"> Select all visible</label>
+  </div>
+
+  <template x-for="item in filteredItems" :key="item.id">
+    <article class="watch-row" x-data="confirmRemove(item.id)">
+      <input type="checkbox" :value="item.id" x-model="$root.selected" :aria-label="`Select ${item.title}`">
+      <div>
+        <a :href="item.url"><strong x-text="item.title"></strong></a>
+        <div class="muted"><span x-text="item.year"></span> • <span x-text="item.runtime"></span> min • ⭐ <span x-text="item.rating"></span></div>
+      </div>
+      <select class="status-select btn" :value="item.status"
+              @change="item.status=$event.target.value; $dispatch('status-change',{id:item.id,status:item.status})">
+        <option value="want">Want to Watch</option>
+        <option value="watched">Watched</option>
+      </select>
+      <button class="btn" type="button" @click="open=true">Remove</button>
+
+      <template x-if="open">
+        <div class="modal-backdrop" @click.self="open=false" x-transition>
+          <div class="modal" role="dialog" aria-modal="true" @click.stop>
+            <h3>Remove this movie?</h3>
+            <p class="muted">This removes it from your saved watchlist.</p>
+            <button class="btn" @click="open=false">Cancel</button>
+            <form :action="`/watchlist/${id}/remove/`" :hx-post="`/watchlist/${id}/remove/`" hx-swap="none"
+                  @htmx:after-request="removeLocal(id)">
+              {% csrf_token %}
+              <button class="btn" type="submit" @click="open=false">Confirm remove</button>
+            </form>
+          </div>
+        </div>
+      </template>
+    </article>
+  </template>
+
+  <div class="empty" x-show="filteredItems.length === 0" x-cloak>
+    <h2>Your watchlist is empty</h2>
+    <p class="muted">Add movies from the catalog or a movie detail page.</p>
+  </div>
+</div>
+{% endblock %}

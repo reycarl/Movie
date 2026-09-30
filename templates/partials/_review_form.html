@@ -1,0 +1,39 @@
+<form hx-post="{% url 'submit_review' movie.slug %}" hx-target="#reviews" hx-swap="outerHTML"
+      x-data="reviewComposer()" @submit="if(!canSubmit){$event.preventDefault(); $dispatch('toast',{message:'Write at least 20 characters.',type:'error'})}">
+  {% csrf_token %}
+  <div class="field">
+    <label for="{{ review_form.author_name.id_for_label }}">Name</label>
+    {{ review_form.author_name }}
+    {{ review_form.author_name.errors }}
+  </div>
+
+  <div class="field" x-data="starRating(0)">
+    <label>Rating</label>
+    <div class="stars">
+      <template x-for="star in 10" :key="star">
+        <button class="star" type="button" @mouseenter="hover=star" @mouseleave="hover=0" @click="value=star"
+                :class="{on: star <= (hover || value)}"
+                :aria-label="`${star} out of 10`">★</button>
+      </template>
+    </div>
+    <p class="muted" x-text="display"></p>
+    <input type="hidden" name="rating" :value="value">
+  </div>
+
+  <div class="field">
+    <label for="{{ review_form.body.id_for_label }}">Review</label>
+    <textarea name="body" id="{{ review_form.body.id_for_label }}" maxlength="500"
+              x-model.trim="body" rows="5" placeholder="Write at least 20 characters…"></textarea>
+    <div class="range-label"><span x-text="`${body.length} / ${max}`"></span><span x-text="`${remaining} characters left`"></span></div>
+    <div class="progress"><span :style="`width:${progress}%`"></span></div>
+    {% if review_form.body.errors %}<div class="error">{{ review_form.body.errors }}</div>{% endif %}
+  </div>
+
+  <label class="toolbar">
+    {{ review_form.has_spoilers }} Contains spoilers
+  </label>
+
+  <button class="btn" type="submit" :disabled="!canSubmit || value === 0" x-data x-bind:title="!canSubmit ? 'Minimum 20 characters' : 'Submit review'">
+    Submit review
+  </button>
+</form>

@@ -1,0 +1,22 @@
+<div x-data="spoilerList()">
+  <label class="toolbar">
+    <input type="checkbox" x-model="showAll">
+    <span>Show spoilers</span>
+  </label>
+  {% for review in movie.reviews.all %}
+    <article class="review" x-data="{revealed:false}">
+      <div><strong>{{ review.author_name }}</strong> • ⭐ {{ review.rating }}/10</div>
+      {% if review.has_spoilers %}
+        <button class="btn" type="button" @click="revealed=!revealed; $dispatch('toast',{message: revealed ? 'Spoiler shown.' : 'Spoiler hidden.', type:'info'})">
+          <span x-text="revealed ? 'Hide spoilers' : 'Show spoiler'"></span>
+        </button>
+        <p :class="{'spoiler': !revealed && !showAll, 'revealed': revealed || showAll}">{{ review.body }}</p>
+      {% else %}
+        <p>{{ review.body }}</p>
+      {% endif %}
+      <small class="muted">{{ review.date_created|date:"M d, Y" }}</small>
+    </article>
+  {% empty %}
+    <p class="muted">No reviews yet.</p>
+  {% endfor %}
+</div>

@@ -1,0 +1,13 @@
+[
+  {"model":"cinebase.genre","pk":1,"fields":{"name":"Action","slug":"action"}},
+  {"model":"cinebase.genre","pk":2,"fields":{"name":"Adventure","slug":"adventure"}},
+  {"model":"cinebase.genre","pk":3,"fields":{"name":"Comedy","slug":"comedy"}},
+  {"model":"cinebase.genre","pk":4,"fields":{"name":"Drama","slug":"drama"}},
+  {"model":"cinebase.genre","pk":5,"fields":{"name":"Sci-Fi","slug":"sci-fi"}},
+  {"model":"cinebase.genre","pk":6,"fields":{"name":"Thriller","slug":"thriller"}},
+  {"model":"cinebase.movie","pk":1,"fields":{"title":"Inception","slug":"inception-2010","year":2010,"runtime_minutes":148,"synopsis":"A skilled thief who steals secrets through dream-sharing technology is offered a chance to erase his past by performing an unusually difficult act: planting an idea in a target's mind.","poster":"","trailer_url":"https://www.youtube.com/embed/YoHD9XEInc0","genres":[1,5,6],"is_published":true,"date_created":"2026-09-01T00:00:00Z"}},
+  {"model":"cinebase.movie","pk":2,"fields":{"title":"The Grand Adventure","slug":"the-grand-adventure-2024","year":2024,"runtime_minutes":118,"synopsis":"A group of friends follows an old map across several towns while learning that the journey matters as much as the destination.","poster":"","trailer_url":"","genres":[2,3],"is_published":true,"date_created":"2026-09-02T00:00:00Z"}},
+  {"model":"cinebase.movie","pk":3,"fields":{"title":"Midnight Signal","slug":"midnight-signal-2022","year":2022,"runtime_minutes":105,"synopsis":"A student discovers a mysterious radio signal that appears every midnight and begins investigating where it comes from.","poster":"","trailer_url":"","genres":[5,6],"is_published":true,"date_created":"2026-09-03T00:00:00Z"}},
+  {"model":"cinebase.movie","pk":4,"fields":{"title":"Second Chances","slug":"second-chances-2021","year":2021,"runtime_minutes":112,"synopsis":"After returning to a familiar hometown, a young professional reconnects with old friends and decides what kind of future to build.","poster":"","trailer_url":"","genres":[3,4],"is_published":true,"date_created":"2026-09-04T00:00:00Z"}},
+  {"model":"cinebase.movie","pk":5,"fields":{"title":"The Last Horizon","slug":"the-last-horizon-2019","year":2019,"runtime_minutes":132,"synopsis":"An exploration crew reaches a distant world and must work together when their planned route home becomes impossible.","poster":"","trailer_url":"","genres":[1,2,5],"is_published":true,"date_created":"2026-09-05T00:00:00Z"}}
+]

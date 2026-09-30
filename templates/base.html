@@ -1,0 +1,68 @@
+{% load static %}
+<!doctype html>
+<html lang="en" x-data x-init="$nextTick(() => Alpine.store('theme').apply())">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}CineBase{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {# Load order matters: plugins and our alpine:init code must come BEFORE Alpine core. #}
+  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.14.9/dist/cdn.min.js"></script>
+  <script src="{% static 'js/alpine.js' %}" defer></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <style>[x-cloak]{display:none !important}</style>
+</head>
+<body
+  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+  @toast.window="Alpine.store('toasts').add($event.detail.message, $event.detail.type)"
+  @watchlist-updated.window="Alpine.store('watchlist').setCount($event.detail.count)"
+>
+<header class="site-header">
+  <div class="container navbar" x-data="navbarMenu()">
+    <a class="brand" href="{% url 'movie_list' %}">🎬 CineBase</a>
+    <div class="nav-actions">
+      <nav class="nav-links" x-show="!open">
+        <a href="{% url 'movie_list' %}">Movies</a>
+        <a href="{% url 'watchlist' %}">Watchlist
+          <span x-cloak x-show="Alpine.store('watchlist').count > 0"
+                x-text="Alpine.store('watchlist').count"></span>
+        </a>
+        <a href="{% url 'movie_create' %}">Manage</a>
+      </nav>
+      <button class="icon-btn" type="button" @click="Alpine.store('theme').toggle()" :aria-label="Alpine.store('theme').dark ? 'Use light mode' : 'Use dark mode'">
+        <span x-text="Alpine.store('theme').dark ? '☀️' : '🌙'"></span>
+      </button>
+      <button class="icon-btn hamburger" type="button" @click="open=!open" :aria-expanded="open" aria-label="Open navigation">
+        ☰
+      </button>
+    </div>
+    <div class="mobile-menu" x-cloak x-show="open" x-transition @click.outside="close()" @keydown.escape.window="close()">
+      <button x-ref="closeButton" class="btn" type="button" @click="close()">Close</button>
+      <a @click="close()" href="{% url 'movie_list' %}">Movies</a>
+      <a @click="close()" href="{% url 'watchlist' %}">Watchlist</a>
+      <a @click="close()" href="{% url 'movie_create' %}">Manage</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<div class="toast-stack" x-data x-cloak>
+  <template x-for="toast in Alpine.store('toasts').items" :key="toast.id">
+    <div class="toast" :class="toast.type">
+      <span x-text="toast.message"></span>
+      <button class="icon-btn" type="button" @click="Alpine.store('toasts').remove(toast.id)">×</button>
+    </div>
+  </template>
+</div>
+
+<footer>
+  <div class="container">CineBase • Django + HTMX + Alpine.js Performance Task</div>
+</footer>
+<div id="watchlist-count-data" hidden>{{ watchlist_count|default:0 }}</div>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

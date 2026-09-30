@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Add Movie – CineBase{% endblock %}
+{% block content %}
+<div class="container hero">
+  <p class="muted">Editor tools</p>
+  <h1>Add a movie</h1>
+</div>
+
+<div class="container panel"
+     x-data="movieWizard()"
+     @slug-preview.window="$refs.slug.textContent=$event.detail.slug">
+
+  {{ genres|json_script:"genre-data" }}
+
+  <div class="wizard-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="progress">
+    <div class="wizard-progress-bar" :style="`width:${progress}%`"></div>
+  </div>
+
+  <div class="wizard-steps">
+    <div class="step-dot" :class="{active:step===1}">1. Basic Info</div>
+    <div class="step-dot" :class="{active:step===2}">2. Cast & Genres</div>
+    <div class="step-dot" :class="{active:step===3}">3. Poster & Review</div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data"
+        hx-post="{% url 'movie_create' %}" hx-target="#wizard-errors" hx-swap="innerHTML"
+        @submit="dirty=false">
+    {% csrf_token %}
+    <input type="hidden" name="cast_json" :value="castJson()">
+
+    <div x-show="step===1" x-transition>
+      <div class="form-grid">
+        <div class="field">
+          <label for="id_title">Title</label>
+          <input id="id_title" name="title" x-model.trim="title" required maxlength="180">
+        </div>
+        <div class="field">
+          <label>Slug preview</label>
+          <div class="panel" x-ref="slug" x-text="slugPreview"></div>
+        </div>
+        <div class="field">
+          <label for="id_year">Year</label>
+          <input id="id_year" name="year" type="number" min="1900" max="2100" x-model.number="year" required>
+        </div>
+        <div class="field">
+          <label for="id_runtime_minutes">Runtime (minutes)</label>
+          <input id="id_runtime_minutes" name="runtime_minutes" type="number" min="1" x-model.number="runtime" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="id_synopsis">Synopsis</label>
+        <textarea id="id_synopsis" name="synopsis" maxlength="2000" x-model="synopsis" required></textarea>
+        <div class="range-label"><span x-text="`${synopsis.length} / 2000 characters`"></span><span x-text="synopsisHint"></span><span x-text="wordLabel"></span></div>
+      </div>
+    </div>
+
+    <div x-show="step===2" x-transition x-cloak>
+      <div class="field" x-data="genrePicker()">
+        <label>Genres</label>
+        <input type="search" placeholder="Filter genres…" x-model="search">
+        <div class="chips" style="margin-top:10px">
+          <template x-for="genre in availableGenres.filter(g => g.name.toLowerCase().includes(search.toLowerCase()))" :key="genre.id">
+            <button type="button" class="chip" :class="{active:genres.includes(genre.id)}" @click="toggleGenre(genre.id)" x-text="genre.name"></button>
+          </template>
+        </div>
+        <template x-for="id in genres" :key="id">
+          <input type="hidden" name="genres" :value="id">
+        </template>
+      </div>
+
+      <div class="field">
+        <div class="toolbar"><strong>Cast</strong><button class="btn" type="button" @click="addCast()">+ Add cast member</button></div>
+        <template x-for="(member,index) in cast" :key="index">
+          <div class="cast-row">
+            <input x-model="member.name" :placeholder="`Actor ${index+1}`">
+            <input x-model="member.character" placeholder="Character">
+            <button class="btn" type="button" @click="removeCast(index)">Remove</button>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <div x-show="step===3" x-transition x-cloak>
+      <div class="field">
+        <label for="id_poster">Poster</label>
+        <input id="id_poster" name="poster" type="file" accept="image/*" @change="previewPoster($event)">
+        <p class="muted" x-text="posterName"></p>
+        <img x-cloak x-show="posterUrl" :src="posterUrl" alt="Poster preview" style="max-width:180px;border-radius:12px">
+      </div>
+      <div class="field">
+        <label for="id_trailer_url">Trailer URL</label>
+        <input id="id_trailer_url" name="trailer_url" type="url" placeholder="https://www.youtube.com/watch?v=...">
+      </div>
+      <label class="toolbar">
+        <input type="checkbox" name="is_published" checked>
+        Published
+      </label>
+    </div>
+
+    <div id="wizard-errors" class="error"></div>
+
+    <p class="muted" x-cloak x-show="step<3 && !canAdvance" x-transition>
+      To continue, please fill in: <span x-text="missingFields.join(', ')"></span>.
+    </p>
+
+    <div class="toolbar">
+      <button class="btn" type="button" @click="back()" :disabled="step===1">Back</button>
+      <button class="btn" type="button" x-show="step<3" @click="next()" :disabled="!canAdvance">Next</button>
+      <button class="btn" type="submit" x-show="step===3">Save movie</button>
+    </div>
+  </form>
+
+  <div class="muted" x-cloak x-show="dirty" x-transition>
+    You have unsaved changes.
+  </div>
+</div>
+{% endblock %}

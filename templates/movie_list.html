@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}CineBase – Movies{% endblock %}
+{% block content %}
+<div class="container hero">
+  <p class="muted">Interactive Movie Database</p>
+  <h1>Find your next movie.</h1>
+  <p class="muted">Django renders the data, HTMX handles server requests, and Alpine.js keeps small UI interactions instant.</p>
+</div>
+
+<div class="container">
+  <div class="toolbar" x-data x-init="$refs.search?.focus()">
+    <form class="search-wrap" id="movie-search"
+          hx-get="{% url 'movie_list' %}" hx-target="#movie-grid" hx-trigger="input changed delay:350ms, search"
+          hx-push-url="true">
+      <input x-ref="search" name="q" value="{{ query }}" placeholder="Search movies…"
+             aria-label="Search movies" @keydown.slash.window.prevent="$refs.search.focus()">
+      <button x-cloak x-show="$refs.search?.value" class="clear-search" type="button"
+              @click="$refs.search.value=''; $refs.search.dispatchEvent(new Event('input',{bubbles:true})); $refs.search.focus()">×</button>
+    </form>
+    <div x-data="viewMode()" class="toolbar">
+      <button class="btn" type="button" @click="setMode('grid')" :aria-pressed="mode==='grid'">Grid</button>
+      <button class="btn" type="button" @click="setMode('list')" :aria-pressed="mode==='list'">List</button>
+    </div>
+  </div>
+
+  <div class="filter-layout">
+    <aside class="panel filters" x-data="filterDrawer()" @keydown.escape.window="close()">
+      <button class="btn" type="button" @click="open=!open" aria-controls="filter-panel" :aria-expanded="open">Filters</button>
+      <div id="filter-panel" class="mobile-filter" x-show="open || window.innerWidth > 700" x-transition>
+        <form hx-get="{% url 'movie_list' %}" hx-target="#movie-grid" hx-trigger="change delay:150ms, submit"
+              hx-push-url="true" @submit.prevent="$event.target.requestSubmit()">
+          <input type="hidden" name="q" value="{{ query }}">
+        <div x-data="genreFilter({{ selected_genres|safe|default:'[]' }})">
+          <h3>Genres</h3>
+          <div class="chips">
+            {% for genre in genres %}
+              <button class="chip" type="button"
+                :class="{active: selected.includes('{{ genre.slug }}')}"
+                @click="toggle('{{ genre.slug }}')">{{ genre.name }}</button>
+            {% endfor %}
+          </div>
+          <button class="btn" type="button" @click="clear()">Clear all</button>
+          <template x-for="slug in selected" :key="slug">
+            <input type="hidden" name="genres" :value="slug">
+          </template>
+        </div>
+
+        <div x-data="{min: {{ min_year|default:1990 }}, max: {{ max_year|default:2026 }}}">
+          <div class="range-row">
+            <div class="range-label"><span>Year</span><span x-text="`${min} to ${max}`"></span></div>
+            <input type="range" name="min_year" min="1950" max="2026" x-model.number="min" @input="if(min>max)max=min">
+            <input type="range" name="max_year" min="1950" max="2026" x-model.number="max" @input="if(max<min)min=max">
+          </div>
+        </div>
+
+        <div x-data="{rating: {{ min_rating|default:0 }}}">
+          <div class="range-row">
+            <div class="range-label"><span>Minimum rating</span><span x-text="`${Number(rating).toFixed(1)}+`"></span></div>
+            <input type="range" name="min_rating" min="0" max="10" step=".5" x-model.number="rating">
+          </div>
+        </div>
+          <button class="btn" type="submit">Apply filters</button>
+        </form>
+      </div>
+    </aside>
+
+    <section>
+      <div class="panel" x-data="{loading:false}"
+           @htmx:before-request.window="loading=true"
+           @htmx:after-request.window="loading=false">
+        <div class="loading-bar" x-cloak x-show="loading" x-transition></div>
+        <div id="movie-grid">
+          {% include "partials/_movie_grid.html" %}
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

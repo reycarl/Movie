@@ -1,0 +1,45 @@
+{% if movies %}
+<div class="movie-grid" x-data="viewMode()" :class="{'list-view': mode==='list'}">
+  {% for movie in movies %}
+    {% with movie_id=movie.id %}
+    <article class="movie-card"
+             x-data="movieCard({{ movie_id }}, {% if movie_id in watchlist_ids %}true{% else %}false{% endif %})"
+             @mouseenter="quick=true" @mouseleave="quick=false">
+      {% if movie.poster %}
+        <img class="poster" src="{{ movie.poster.url }}" alt="{{ movie.title }} poster">
+      {% else %}
+        <div class="poster">{{ movie.title }}</div>
+      {% endif %}
+      <div class="content">
+        <h3><a href="{{ movie.get_absolute_url }}">{{ movie.title }}</a></h3>
+        <div class="muted">{{ movie.year }} • {{ movie.runtime_minutes }} min • ⭐ {{ movie.average_rating|default:"0" }}</div>
+        <div class="card-actions">
+          <a class="btn" href="{{ movie.get_absolute_url }}">Details</a>
+          <form hx-post="{% url 'toggle_watchlist' movie.id %}" hx-swap="none">
+            {% csrf_token %}
+            <button x-ref="watchButton" class="heart" type="submit"
+                    :class="{active: favorite}"
+                    :aria-pressed="favorite"
+                    aria-label="Toggle watchlist"
+                    @click="toggleFavorite()"
+                    @click.stop>
+              <span x-text="favorite ? '♥' : '♡'"></span>
+            </button>
+          </form>
+        </div>
+      </div>
+      <div class="quick-view" x-cloak x-show="quick" x-transition>
+        <strong>{{ movie.runtime_minutes }} minutes</strong>
+        <p>{{ movie.genres.all|join:", " }}</p>
+        <p>{{ movie.synopsis|truncatechars:130 }}</p>
+      </div>
+    </article>
+    {% endwith %}
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <h2>No movies found</h2>
+  <p class="muted">Try a different search or filter.</p>
+</div>
+{% endif %}

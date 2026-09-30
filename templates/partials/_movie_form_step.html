@@ -1,0 +1,8 @@
+<div class="panel">
+  <strong>Please check the form.</strong>
+  {% if form.errors %}
+    {{ form.errors }}
+  {% else %}
+    The server rejected the submission. Review the fields and try again.
+  {% endif %}
+</div>

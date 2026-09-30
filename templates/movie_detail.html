@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ movie.title }} – CineBase{% endblock %}
+{% block content %}
+<div class="container detail" x-data="tabs('overview')">
+  <div>
+    {% if movie.poster %}
+      <img class="detail-poster" src="{{ movie.poster.url }}" alt="{{ movie.title }} poster">
+    {% else %}
+      <div class="poster detail-poster">{{ movie.title }}</div>
+    {% endif %}
+  </div>
+  <div class="detail-main">
+    <h1>{{ movie.title }}</h1>
+    <div class="meta"><span>{{ movie.year }}</span><span>{{ movie.runtime_minutes }} min</span><span>⭐ {{ movie.average_rating|default:"0" }}/10</span></div>
+
+    <form hx-post="{% url 'toggle_watchlist' movie.id %}" hx-swap="none">
+      {% csrf_token %}
+      <button class="btn" type="submit" x-data="{saved: {{ in_watchlist|yesno:'true,false' }}}"
+              @click="saved=!saved; Alpine.store('watchlist').adjust(saved ? 1 : -1)"
+              :class="saved ? 'active' : ''">
+        <span x-text="saved ? '♥ In Watchlist' : '♡ Add to Watchlist'"></span>
+      </button>
+    </form>
+
+    <div class="tabs" role="tablist" @keydown.arrow-right.prevent="move(1)" @keydown.arrow-left.prevent="move(-1)">
+      <button class="tab" role="tab" :aria-selected="active==='overview'" :class="{active:active==='overview'}" @click="select('overview')">Overview</button>
+      <button class="tab" role="tab" :aria-selected="active==='cast'" :class="{active:active==='cast'}" @click="select('cast')">Cast</button>
+      <button class="tab" role="tab" :aria-selected="active==='reviews'" :class="{active:active==='reviews'}" @click="select('reviews')">Reviews</button>
+    </div>
+
+    <section x-cloak x-show="active==='overview'" x-transition>
+      <div x-data="{expanded:false}">
+        <p :class="expanded ? '' : 'muted'">
+          {{ movie.synopsis }}
+        </p>
+        <button class="btn" type="button" @click="expanded=!expanded" x-text="expanded ? 'Read less' : 'Read more'"></button>
+      </div>
+      <div class="toolbar">
+        <div class="panel" x-data="trailerModal('{{ movie.trailer_url|escapejs }}')">
+          <button class="btn" type="button" @click="open=true">▶ Watch trailer</button>
+          <template x-teleport="body">
+            <div class="modal-backdrop" x-cloak x-show="open" x-transition @click.self="close()" @keydown.escape.window="close()" role="dialog" aria-modal="true">
+              <div class="modal" @click.stop>
+                <button class="btn" type="button" @click="close()">Close</button>
+                <template x-if="url">
+                  <iframe :src="url" title="Movie trailer" allowfullscreen></iframe>
+                </template>
+                <p x-show="!url" class="muted">No trailer URL was provided.</p>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </section>
+
+    <section x-cloak x-show="active==='cast'" x-transition>
+      {% for member in movie.cast.all %}
+      <div class="review"><strong>{{ member.name }}</strong> <span class="muted">as {{ member.character }}</span></div>
+      {% empty %}
+      <p class="muted">No cast information yet.</p>
+      {% endfor %}
+    </section>
+
+    <section x-cloak x-show="active==='reviews'" x-transition>
+      <div id="reviews">
+        {% include "partials/_reviews.html" %}
+      </div>
+      <div id="review-form" class="panel">
+        {% include "partials/_review_form.html" %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
